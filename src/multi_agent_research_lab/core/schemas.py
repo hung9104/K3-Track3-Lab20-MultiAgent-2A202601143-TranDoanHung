@@ -21,6 +21,13 @@ class AgentName(StrEnum):
     CRITIC = "critic"
 
 
+class WorkflowRoute(StrEnum):
+    RESEARCHER = "researcher"
+    ANALYST = "analyst"
+    WRITER = "writer"
+    DONE = "done"
+
+
 class ResearchQuery(StrictSchema):
     query: str = Field(..., min_length=5)
     max_sources: int = Field(default=5, ge=1, le=20)

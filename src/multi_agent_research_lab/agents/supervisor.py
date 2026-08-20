@@ -1,22 +1,37 @@
-"""Supervisor / router skeleton."""
+"""Deterministic supervisor for state-based routing."""
 
 from multi_agent_research_lab.agents.base import BaseAgent
-from multi_agent_research_lab.core.errors import StudentTodoError
+from multi_agent_research_lab.core.config import Settings, get_settings
+from multi_agent_research_lab.core.schemas import AgentName, WorkflowRoute
 from multi_agent_research_lab.core.state import ResearchState
 
 
 class SupervisorAgent(BaseAgent):
-    """Decides which worker should run next and when to stop."""
+    """Choose the next worker from validated state, without another LLM call."""
 
-    name = "supervisor"
+    name = AgentName.SUPERVISOR.value
+
+    def __init__(self, settings: Settings | None = None) -> None:
+        self.settings = settings or get_settings()
+
+    def route(self, state: ResearchState) -> WorkflowRoute:
+        if state.final_answer or state.errors:
+            return WorkflowRoute.DONE
+        if state.iteration >= self.settings.max_iterations:
+            state.add_error("Workflow reached max_iterations", agent=AgentName.SUPERVISOR)
+            return WorkflowRoute.DONE
+        if not state.sources or not state.research_notes:
+            return WorkflowRoute.RESEARCHER
+        if not state.analysis_notes:
+            return WorkflowRoute.ANALYST
+        return WorkflowRoute.WRITER
 
     def run(self, state: ResearchState) -> ResearchState:
-        """Update `state.route_history` with the next route.
-
-        TODO(student): Implement routing policy. Suggested steps:
-        - Inspect request, current notes, and missing fields.
-        - Choose one of: researcher, analyst, writer, done.
-        - Enforce max iterations and failure fallback.
-        """
-
-        raise StudentTodoError("TODO(student): implement SupervisorAgent.run")
+        route = self.route(state)
+        state.record_route(route)
+        state.add_trace_event(
+            "route_selected",
+            {"route": route.value, "iteration": state.iteration},
+            agent=AgentName.SUPERVISOR,
+        )
+        return state

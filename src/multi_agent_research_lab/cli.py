@@ -8,7 +8,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 from multi_agent_research_lab.core.config import get_settings
-from multi_agent_research_lab.core.errors import LabError, StudentTodoError
+from multi_agent_research_lab.core.errors import LabError
 from multi_agent_research_lab.core.schemas import AgentName, AgentResult, ResearchQuery, TokenUsage
 from multi_agent_research_lab.core.state import ResearchState
 from multi_agent_research_lab.graph.workflow import MultiAgentWorkflow
@@ -107,15 +107,15 @@ def baseline(
 def multi_agent(
     query: Annotated[str, typer.Option("--query", "-q", help="Research query")],
 ) -> None:
-    """Run the multi-agent workflow skeleton."""
+    """Run the multi-agent workflow."""
 
     _init()
     state = ResearchState(request=_parse_query(query))
     workflow = MultiAgentWorkflow()
     try:
         result = workflow.run(state)
-    except StudentTodoError as exc:
-        console.print(Panel.fit(str(exc), title="Expected TODO", style="yellow"))
+    except LabError as exc:
+        console.print(Panel.fit(str(exc), title="Workflow Error", style="red"))
         raise typer.Exit(code=2) from exc
     console.print(result.model_dump_json(indent=2))
 

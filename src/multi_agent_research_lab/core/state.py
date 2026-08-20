@@ -15,6 +15,7 @@ from multi_agent_research_lab.core.schemas import (
     TokenUsage,
     TraceEvent,
     WorkflowError,
+    WorkflowRoute,
 )
 
 
@@ -37,8 +38,8 @@ class ResearchState(BaseModel):
     trace: list[TraceEvent] = Field(default_factory=list)
     errors: list[WorkflowError] = Field(default_factory=list)
 
-    def record_route(self, route: AgentName | str) -> None:
-        route_value = AgentName(route).value
+    def record_route(self, route: AgentName | WorkflowRoute | str) -> None:
+        route_value = WorkflowRoute(route).value
         self.route_history.append(route_value)
         self.iteration += 1
 
