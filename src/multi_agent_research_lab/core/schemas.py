@@ -13,6 +13,7 @@ class StrictSchema(BaseModel):
 
 
 class AgentName(StrEnum):
+    BASELINE = "baseline"
     SUPERVISOR = "supervisor"
     RESEARCHER = "researcher"
     ANALYST = "analyst"
