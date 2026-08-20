@@ -5,7 +5,7 @@ Keep config small and explicit. Do not read environment variables directly in ag
 
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -35,6 +35,19 @@ class Settings(BaseSettings):
 
     max_iterations: int = Field(default=6, ge=1, le=20, validation_alias="MAX_ITERATIONS")
     timeout_seconds: int = Field(default=60, ge=5, le=600, validation_alias="TIMEOUT_SECONDS")
+    max_retries: int = Field(default=2, ge=0, le=10, validation_alias="MAX_RETRIES")
+    retry_backoff_seconds: float = Field(
+        default=1.0, ge=0, le=60, validation_alias="RETRY_BACKOFF_SECONDS"
+    )
+
+    @field_validator("app_env", "log_level", "openai_model", mode="before")
+    @classmethod
+    def reject_blank_required_strings(cls, value: object) -> object:
+        """Reject whitespace-only values that would fail later and less clearly."""
+
+        if isinstance(value, str) and not value.strip():
+            raise ValueError("must not be blank")
+        return value
 
 
 @lru_cache(maxsize=1)
