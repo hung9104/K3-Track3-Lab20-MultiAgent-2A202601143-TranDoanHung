@@ -114,4 +114,21 @@ Cách khắc phục (chọn 1 trong 3):
 Mỗi nhóm trả lời 2 câu:
 
 1. Case nào nên dùng multi-agent? Vì sao?
+
+   Nên dùng multi-agent cho nhiệm vụ phức tạp có thể tách thành các vai trò chuyên biệt,
+   chẳng hạn nghiên cứu nhiều nguồn, đối chiếu bằng chứng, viết báo cáo có trích dẫn và
+   kiểm duyệt chất lượng. Trong dự án này, Researcher thu thập nguồn, Analyst đánh giá
+   bằng chứng, Writer tổng hợp câu trả lời và Critic kiểm tra citation trước khi kết thúc.
+   Cách làm này phù hợp khi chất lượng, khả năng truy vết và việc xác định bước gây lỗi
+   quan trọng hơn tốc độ phản hồi. Shared state và trace cũng giúp kiểm tra rõ agent nào
+   tạo ra dữ liệu nào, thay vì để toàn bộ quá trình nằm trong một prompt dài.
+
 2. Case nào không nên dùng multi-agent? Vì sao?
+
+   Không nên dùng multi-agent cho câu hỏi đơn giản, tác vụ có một bước rõ ràng, yêu cầu
+   phản hồi thời gian thực hoặc có ngân sách token thấp. Ví dụ: phân loại một câu, chuẩn
+   hóa một trường dữ liệu, dịch một đoạn ngắn hoặc trả lời kiến thức trực tiếp thường chỉ
+   cần single-agent. Việc thêm Supervisor và nhiều worker làm tăng số lần gọi LLM, latency,
+   chi phí và số điểm có thể thất bại; handoff còn có thể làm mất ngữ cảnh. Chỉ nên chọn
+   multi-agent khi benchmark trên cùng tập truy vấn cho thấy lợi ích về quality, citation
+   coverage hoặc failure rate đủ lớn để bù cho phần chi phí và độ phức tạp tăng thêm.
