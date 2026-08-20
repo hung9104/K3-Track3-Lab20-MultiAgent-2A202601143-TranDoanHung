@@ -15,7 +15,11 @@ class SupervisorAgent(BaseAgent):
         self.settings = settings or get_settings()
 
     def route(self, state: ResearchState) -> WorkflowRoute:
-        if state.final_answer or state.errors:
+        if state.errors:
+            return WorkflowRoute.DONE
+        if state.critic_review is not None and (
+            state.critic_review.approved or state.revision_count >= self.settings.max_revisions
+        ):
             return WorkflowRoute.DONE
         if state.iteration >= self.settings.max_iterations:
             state.add_error("Workflow reached max_iterations", agent=AgentName.SUPERVISOR)
@@ -24,6 +28,11 @@ class SupervisorAgent(BaseAgent):
             return WorkflowRoute.RESEARCHER
         if not state.analysis_notes:
             return WorkflowRoute.ANALYST
+        if not state.final_answer:
+            return WorkflowRoute.WRITER
+        if state.critic_review is None:
+            return WorkflowRoute.CRITIC
+        state.revision_count += 1
         return WorkflowRoute.WRITER
 
     def run(self, state: ResearchState) -> ResearchState:

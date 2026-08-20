@@ -28,12 +28,16 @@ class WriterAgent(BaseAgent):
             f"[{index}] {source.title} — {source.url or 'URL unavailable'}"
             for index, source in enumerate(state.sources, start=1)
         )
+        revision_feedback = ""
+        if state.critic_review is not None:
+            feedback = state.critic_review.issues + state.critic_review.recommendations
+            revision_feedback = "\n\nCritic feedback to address:\n- " + "\n- ".join(feedback)
         response = self.llm_client.complete(
             "You are the writer. Answer clearly for the requested audience using only the "
             "analysis. Cite factual claims with [source number], then include the supplied "
             "Sources list unchanged.",
             f"Question: {state.request.query}\nAudience: {state.request.audience}\n\n"
-            f"Analysis:\n{state.analysis_notes}\n\nSources:\n{source_list}",
+            f"Analysis:\n{state.analysis_notes}{revision_feedback}\n\nSources:\n{source_list}",
         )
         citations = [int(value) for value in CITATION_PATTERN.findall(response.content)]
         if not citations:
@@ -41,6 +45,7 @@ class WriterAgent(BaseAgent):
         if any(citation < 1 or citation > len(state.sources) for citation in citations):
             raise ValidationError("Writer output contains a citation to an unknown source")
         state.final_answer = response.content
+        state.critic_review = None
         state.add_agent_result(
             AgentResult(
                 agent=AgentName.WRITER,

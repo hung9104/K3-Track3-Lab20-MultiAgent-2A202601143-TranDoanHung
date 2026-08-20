@@ -21,9 +21,10 @@ lượng hoặc khả năng truy vết lớn hơn chi phí điều phối phát 
 | Researcher | Tìm và tóm tắt nguồn liên quan | `request`, giới hạn nguồn | `sources`, `research_notes` | Search lỗi, không có nguồn, nguồn trùng |
 | Analyst | So sánh bằng chứng và đánh giá độ tin cậy | `sources`, `research_notes` | `analysis_notes` | Phân tích thiếu nguồn hoặc không có bằng chứng |
 | Writer | Viết câu trả lời cuối có trích dẫn | `request`, sources và các notes | `final_answer` | Citation không tồn tại, câu trả lời rỗng |
+| Critic | Kiểm tra grounding, citation và chất lượng | `final_answer`, `sources` | `critic_review` có verdict và điểm | JSON sai schema, đánh giá thiếu bằng chứng |
 
-`Critic` có trong skeleton nhưng không thuộc workflow tối thiểu. Chỉ thêm vào khi benchmark
-chứng minh bước kiểm duyệt riêng mang lại lợi ích.
+`Critic` là phần mở rộng bonus chạy sau Writer. Nếu review không đạt, Writer được sửa tối đa
+`MAX_REVISIONS` lần; giới hạn mặc định là một lần để tránh vòng lặp và chi phí không kiểm soát.
 
 ## Shared state
 
@@ -38,6 +39,8 @@ chứng minh bước kiểm duyệt riêng mang lại lợi ích.
 | `research_notes` | Kết quả bàn giao từ Researcher |
 | `analysis_notes` | Kết quả bàn giao từ Analyst |
 | `final_answer` | Đầu ra cuối của Writer |
+| `critic_review` | Verdict, quality score, issues và khuyến nghị của Critic |
+| `revision_count` | Số lần Writer đã sửa theo Critic |
 | `agent_results` | Kết quả từng agent, latency và token usage |
 | `token_usage` | Tổng token toàn workflow để benchmark chi phí |
 | `trace` | Các sự kiện có cấu trúc để debug hoặc gửi tới tracing backend |
@@ -52,7 +55,9 @@ liệu. URL nguồn chỉ chấp nhận HTTP/HTTPS.
 Chưa có sources                   -> Researcher
 Có sources, chưa có analysis     -> Analyst
 Có analysis, chưa có answer      -> Writer
-Có final_answer                  -> END
+Có final_answer, chưa review     -> Critic
+Critic từ chối, còn lượt sửa     -> Writer
+Critic duyệt/hết lượt sửa        -> END
 iteration >= max_iterations      -> STOP với lỗi có cấu trúc
 worker gặp lỗi retryable         -> retry tối đa max_retries
 worker vẫn lỗi hoặc không retry  -> fallback/STOP

@@ -2,7 +2,7 @@
 
 import time
 from dataclasses import dataclass
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 from multi_agent_research_lab.core.config import Settings, get_settings
 from multi_agent_research_lab.core.errors import AgentExecutionError, LabError
@@ -44,10 +44,13 @@ class LLMClient:
         except ImportError as exc:
             raise LabError('OpenAI SDK is not installed; run: pip install -e ".[llm]"') from exc
 
-        self._client = OpenAI(
-            api_key=self.settings.openai_api_key,
-            timeout=self.settings.timeout_seconds,
-            max_retries=0,
+        self._client = cast(
+            ChatCompletionsClient,
+            OpenAI(
+                api_key=self.settings.openai_api_key,
+                timeout=self.settings.timeout_seconds,
+                max_retries=0,
+            ),
         )
         return self._client
 

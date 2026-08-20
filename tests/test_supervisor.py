@@ -1,6 +1,6 @@
 from multi_agent_research_lab.agents import SupervisorAgent
 from multi_agent_research_lab.core.config import Settings
-from multi_agent_research_lab.core.schemas import ResearchQuery, SourceDocument
+from multi_agent_research_lab.core.schemas import CriticReview, ResearchQuery, SourceDocument
 from multi_agent_research_lab.core.state import ResearchState
 
 
@@ -25,6 +25,10 @@ def test_supervisor_routes_from_state_completeness() -> None:
     assert state.route_history[-1] == "writer"
 
     state.final_answer = "Answer [1]"
+    supervisor.run(state)
+    assert state.route_history[-1] == "critic"
+
+    state.critic_review = CriticReview(approved=True, quality_score=9)
     supervisor.run(state)
     assert state.route_history[-1] == "done"
 

@@ -1,5 +1,6 @@
 """Public schemas exchanged between CLI, agents, and evaluators."""
 
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
 
@@ -25,7 +26,13 @@ class WorkflowRoute(StrEnum):
     RESEARCHER = "researcher"
     ANALYST = "analyst"
     WRITER = "writer"
+    CRITIC = "critic"
     DONE = "done"
+
+
+class TraceStatus(StrEnum):
+    OK = "ok"
+    ERROR = "error"
 
 
 class ResearchQuery(StrictSchema):
@@ -78,6 +85,9 @@ class TraceEvent(StrictSchema):
     name: str = Field(..., min_length=1)
     agent: AgentName | None = None
     payload: dict[str, Any] = Field(default_factory=dict)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    duration_seconds: float | None = Field(default=None, ge=0)
+    status: TraceStatus = TraceStatus.OK
 
 
 class WorkflowError(StrictSchema):
@@ -89,9 +99,20 @@ class WorkflowError(StrictSchema):
     attempt: int = Field(default=1, ge=1)
 
 
+class CriticReview(StrictSchema):
+    """Structured verdict used for bounded writer revision."""
+
+    approved: bool
+    quality_score: float = Field(..., ge=0, le=10)
+    issues: list[str] = Field(default_factory=list)
+    recommendations: list[str] = Field(default_factory=list)
+
+
 class BenchmarkMetrics(StrictSchema):
     run_name: str
+    sample_count: int = Field(default=1, ge=1)
     latency_seconds: float
+    total_tokens: float | None = Field(default=None, ge=0)
     estimated_cost_usd: float | None = None
     quality_score: float | None = Field(default=None, ge=0, le=10)
     citation_coverage: float | None = Field(default=None, ge=0, le=1)

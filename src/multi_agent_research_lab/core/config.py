@@ -24,6 +24,12 @@ class Settings(BaseSettings):
 
     openai_api_key: str | None = Field(default=None, validation_alias="OPENAI_API_KEY")
     openai_model: str = Field(default="gpt-4o-mini", validation_alias="OPENAI_MODEL")
+    openai_input_cost_per_million: float | None = Field(
+        default=None, ge=0, validation_alias="OPENAI_INPUT_COST_PER_MILLION"
+    )
+    openai_output_cost_per_million: float | None = Field(
+        default=None, ge=0, validation_alias="OPENAI_OUTPUT_COST_PER_MILLION"
+    )
 
     langsmith_api_key: str | None = Field(default=None, validation_alias="LANGSMITH_API_KEY")
     langsmith_project: str = Field(
@@ -41,6 +47,7 @@ class Settings(BaseSettings):
     max_iterations: int = Field(default=6, ge=1, le=20, validation_alias="MAX_ITERATIONS")
     timeout_seconds: int = Field(default=60, ge=5, le=600, validation_alias="TIMEOUT_SECONDS")
     max_retries: int = Field(default=2, ge=0, le=10, validation_alias="MAX_RETRIES")
+    max_revisions: int = Field(default=1, ge=0, le=5, validation_alias="MAX_REVISIONS")
     retry_backoff_seconds: float = Field(
         default=1.0, ge=0, le=60, validation_alias="RETRY_BACKOFF_SECONDS"
     )

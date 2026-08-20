@@ -4,16 +4,19 @@ Students should extend this file when adding new agents, outputs, or evaluation 
 """
 
 from typing import Any
+from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from multi_agent_research_lab.core.schemas import (
     AgentName,
     AgentResult,
+    CriticReview,
     ResearchQuery,
     SourceDocument,
     TokenUsage,
     TraceEvent,
+    TraceStatus,
     WorkflowError,
     WorkflowRoute,
 )
@@ -25,6 +28,7 @@ class ResearchState(BaseModel):
     model_config = ConfigDict(extra="forbid", validate_assignment=True)
 
     request: ResearchQuery
+    run_id: str = Field(default_factory=lambda: str(uuid4()))
     iteration: int = 0
     route_history: list[str] = Field(default_factory=list)
 
@@ -32,6 +36,8 @@ class ResearchState(BaseModel):
     research_notes: str | None = None
     analysis_notes: str | None = None
     final_answer: str | None = None
+    critic_review: CriticReview | None = None
+    revision_count: int = Field(default=0, ge=0)
 
     agent_results: list[AgentResult] = Field(default_factory=list)
     token_usage: TokenUsage = Field(default_factory=TokenUsage)
@@ -44,9 +50,22 @@ class ResearchState(BaseModel):
         self.iteration += 1
 
     def add_trace_event(
-        self, name: str, payload: dict[str, Any], agent: AgentName | None = None
+        self,
+        name: str,
+        payload: dict[str, Any],
+        agent: AgentName | None = None,
+        duration_seconds: float | None = None,
+        status: TraceStatus = TraceStatus.OK,
     ) -> None:
-        self.trace.append(TraceEvent(name=name, agent=agent, payload=payload))
+        self.trace.append(
+            TraceEvent(
+                name=name,
+                agent=agent,
+                payload=payload,
+                duration_seconds=duration_seconds,
+                status=status,
+            )
+        )
 
     def add_agent_result(self, result: AgentResult) -> None:
         self.agent_results.append(result)
